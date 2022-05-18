@@ -1,4 +1,5 @@
-import { useState } from "react";
+import axios from "axios";
+import { useState, useEffect } from "react";
 
 import "./App.css";
 
@@ -7,6 +8,31 @@ function App() {
   const [randomBuyList, setRandomBuyList] = useState([]);
   const [randomSellList, setRandomSellList] = useState([]);
   const [clickedBuyList, setClickedBuyList] = useState([]);
+  const backendUrl = 'http://localhost:5000';
+
+  useEffect(()=>{
+    fetchBuyData();
+    fetchSellData();
+  },[backendUrl])
+  const fetchBuyData = async()=>{
+    try{
+      const data = await axios.get(`${backendUrl}/api/v1/get-buy-data`);
+      setRandomBuyList(data?.data?.buys);
+    }catch(err){
+      console.log(err);
+    }
+  }
+
+  const fetchSellData = async () => {
+    try {
+      const data = await axios.get(`${backendUrl}/api/v1/get-sell-data`);
+      console.log(data);
+      setRandomSellList(data?.data?.sells);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const generateRandomQuantity = (min = 35000, max = 36000) => {
     let difference = max - min;
     let rand = Math.random();
@@ -14,23 +40,26 @@ function App() {
     rand = rand + min;
     return rand;
   };
-  const getRandomBuyList = () => {
+  const getRandomBuyList = async() => {
     let buyRate = Math.floor(Math.random() * 10);
     let buyQuantity = generateRandomQuantity();
-    setRandomBuyList([...randomBuyList, { qty: buyQuantity, rate: buyRate }]);
-    console.log(randomBuyList);
+    // setRandomBuyList([...randomBuyList, { qty: buyQuantity, rate: buyRate }]);
+    await axios.post(`${backendUrl}/api/v1/buy`,{ qty: buyQuantity, rate: buyRate }).then(data=>{
+      fetchBuyData();
+    });
   };
 
-  const getRandomSellList = () => {
-    const sellList = [];
+  const getRandomSellList = async () => {
     let sellRate = Math.floor(Math.random() * 10);
     let sellQuantity = generateRandomQuantity();
-    sellList.push(sellRate, sellQuantity);
-    setRandomSellList([
-      ...randomSellList,
-      { qty: sellQuantity, rate: sellRate },
-    ]);
-    console.log(randomSellList);
+    // sellList.push(sellRate, sellQuantity);
+    // setRandomSellList([
+    //   ...randomSellList,
+    //   { qty: sellQuantity, rate: sellRate },
+    // ]);
+     await axios.post(`${backendUrl}/api/v1/sell`,{ qty: sellQuantity, rate: sellRate }).then(data=>{
+      fetchSellData();
+    });
   };
 
   return (
@@ -54,11 +83,13 @@ function App() {
         <div className="buy-list w-full">
           {randomBuyList?.map((item, index) => (
             <div
-              key={index}
+              key={item._id}
               className="flex flex-row-reverse justify-between bg-black text-green-500 font-bold text-[1.5rem] box"
             >
-              <p className="mr-28">{item.qty}</p>
-              <p className="ml-28">{item.rate}</p>
+              <p className="mr-80">{item.buyQuantity}</p>
+              <p className="ml-80">{item.buyRate}</p>
+
+
             </div>
           ))}
         </div>
@@ -67,11 +98,11 @@ function App() {
         <div className="sell-list w-full">
           {randomSellList?.map((item, index) => (
             <div
-              key={index}
+              key={item._id}
               className="flex flex-row-reverse justify-between bg-black text-red-500 font-bold text-[1.5rem] box"
             >
-              <p className="mr-28">{item.qty}</p>
-              <p className="ml-28">{item.rate}</p>
+              <p className="mr-80">{item.sellQuantity}</p>
+              <p className="ml-80">{item.sellRate}</p>
             </div>
           ))}
         </div>
